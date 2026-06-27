@@ -42,10 +42,19 @@ const FALLBACK_HAIKUS = {
 }
 
 function buildPrompt(keywords, language, spiciness) {
+  const styleGuide = {
+    0: 'Напиши спокійний, класичний вірш — мінімалістичний, зосереджений на моменті, природі чи тихому спостереженні.',
+    1: 'Напиши злегка оживлений вірш — класична основа, але з ледь помітною теплотою чи легким гумором.',
+    2: 'Напиши грайливий вірш — більш невимушений тон, свіжий погляд, легка іронія.',
+    3: 'Напиши сміливий вірш — яскраві образи, несподівані порівняння, зухвалий але поетичний тон.',
+    4: 'Напиши гострий, майже зухвалий вірш — різкі контрасти, провокативні образи, surrealist touch.',
+    5: 'Напиши динамічний, експресивний вірш — енергійний ритм, несподівані повороти, на межі абсурду.',
+    6: 'Напиши максимально гострий вірш — абсурдний, непередбачуваний, грайливо-божевільний. Порушуй очікування, але залишайся поетичним.',
+  }
+
   return [
     `Ти — японський поет. Напиши хайку мовою ${language} на основі слів: ${keywords}.`,
-    `Рівень гостроти (spiciness): ${spiciness}.`,
-    '0 = класичний спокійний вірш, 6 = максимально гострий — грайливий, абсурдний, непередбачуваний текст.',
+    `Рівень гостроти: ${spiciness}/6. ${styleGuide[spiciness]}`,
     'Хайку має бути з трьох рядків. Суворий 5-7-5 не потрібен.',
     'Не використовуй мат, агресію, образи або заборонений контент.',
     'Якщо ключові слова провокаційні — створи безпечний, поетичний текст на основі їхнього образу.',
@@ -108,7 +117,7 @@ async function callOpenAI(keywords, language, spiciness) {
   const prompt = buildPrompt(keywords, language, spiciness)
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 60000)
+  const timeout = setTimeout(() => controller.abort(), 30000)
 
   try {
     const response = await openai.chat.completions.create(
@@ -119,7 +128,6 @@ async function callOpenAI(keywords, language, spiciness) {
           { role: 'user', content: `Напиши хайку мовою ${language} на основі слів: ${keywords}` },
         ],
         max_completion_tokens: 4000,
-        temperature: 1,
       },
       { signal: controller.signal }
     )
