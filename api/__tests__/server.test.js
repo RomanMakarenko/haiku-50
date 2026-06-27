@@ -135,7 +135,7 @@ describe('POST /api/generate', () => {
     expect(res.body.error).toContain('гостроти')
   })
 
-  it('повертає 400, коли keywords містять мат/агресію', async () => {
+  it('повертає 400 з profanityWords, коли keywords містять мат/агресію', async () => {
     const res = await postJson('/api/generate', {
       keywords: 'fuck, you, bastard',
       language: 'en',
@@ -143,6 +143,11 @@ describe('POST /api/generate', () => {
     })
     expect(res.status).toBe(400)
     expect(res.body.error).toContain('нецензурні')
+    expect(res.body.profanityWords).toBeDefined()
+    expect(Array.isArray(res.body.profanityWords)).toBe(true)
+    expect(res.body.profanityWords.length).toBeGreaterThan(0)
+    expect(res.body.profanityWords).toContain('fuck')
+    expect(res.body.profanityWords).toContain('bastard')
   })
 
   it('повертає 200 з fallback:true при недоступності OpenAI', async () => {

@@ -87,6 +87,12 @@
     }
   }
 
+  // --- Modal refs ---
+  const profanityModal = document.getElementById('profanityModal')
+  const modalCloseBtn = document.getElementById('modalCloseBtn')
+  const modalActionBtn = document.getElementById('modalActionBtn')
+  const modalWordList = document.getElementById('modalWordList')
+
   // --- Error display ---
   function showError(message) {
     errorArea.textContent = message
@@ -97,6 +103,39 @@
     errorArea.textContent = ''
     errorArea.hidden = true
   }
+
+  // --- Profanity modal ---
+  function showProfanityModal(words) {
+    // Render word tags
+    modalWordList.innerHTML = words
+      .map(word => `<span class="word-tag">${escapeHtml(word)}</span>`)
+      .join('')
+
+    profanityModal.hidden = false
+
+    // Prevent body scrolling while modal is open
+    document.body.style.overflow = 'hidden'
+  }
+
+  function hideProfanityModal() {
+    profanityModal.hidden = true
+    document.body.style.overflow = ''
+    modalWordList.innerHTML = ''
+  }
+
+  // Close modal on overlay click (click outside content)
+  profanityModal.addEventListener('click', (e) => {
+    if (e.target === profanityModal) {
+      hideProfanityModal()
+    }
+  })
+
+  // Close with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !profanityModal.hidden) {
+      hideProfanityModal()
+    }
+  })
 
   // --- Wasabi (spiciness) ---
   function updateWasabi() {
@@ -239,7 +278,11 @@
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Щось пішло не за планом. Спробуйте пізніше.')
+        const err = new Error(data.error || 'Щось пішло не за планом. Спробуйте пізніше.')
+        if (data.profanityWords) {
+          err.profanityWords = data.profanityWords
+        }
+        throw err
       }
 
       return data
@@ -284,7 +327,11 @@
         saveToHistory(result.haiku, language, spiciness, keywords)
       }
     } catch (err) {
-      showError(err.message)
+      if (err.profanityWords) {
+        showProfanityModal(err.profanityWords)
+      } else {
+        showError(err.message)
+      }
       displayPlaceholder()
     } finally {
       generateBtn.classList.remove('loading')
@@ -326,6 +373,10 @@
   clearHistoryBtn.addEventListener('click', () => {
     clearHistory()
   })
+
+  // Modal close buttons
+  modalCloseBtn.addEventListener('click', hideProfanityModal)
+  modalActionBtn.addEventListener('click', hideProfanityModal)
 
   // Allow Enter key to submit
   keywordsInput.addEventListener('keydown', (e) => {

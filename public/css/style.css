@@ -681,6 +681,131 @@ body {
   }
 }
 
+/* --- Profanity Modal --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(44, 42, 38, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+  animation: modalFadeIn 0.25s ease;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(44, 42, 38, 0.2);
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  animation: modalSlideIn 0.3s ease;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  transition: all var(--transition);
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  background: var(--error-bg);
+  border-color: var(--accent-light);
+  color: var(--error-text);
+}
+
+.modal-body {
+  padding: 1.75rem 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.modal-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.modal-title {
+  font-family: 'Noto Serif JP', Georgia, serif;
+  font-size: 1rem;
+  color: var(--error-text);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.modal-message {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.modal-word-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.modal-word-list .word-tag {
+  display: inline-block;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.65rem;
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--accent-light);
+  border-radius: 4px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.modal-action-btn {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.85rem;
+  padding: 0.5rem 1.75rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--brush-color);
+  color: #f5f0e8;
+  cursor: pointer;
+  transition: all var(--transition);
+  letter-spacing: 0.08em;
+}
+
+.modal-action-btn:hover {
+  background: #2c2a26;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(44, 42, 38, 0.2);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* --- Accessibility --- */
 @media (prefers-reduced-motion: reduce) {
   *,

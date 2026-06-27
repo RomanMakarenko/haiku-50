@@ -62,9 +62,20 @@ function buildPrompt(keywords, language, spiciness) {
   ].join('\n')
 }
 
-function containsProfanity(text) {
+function findProfanity(text) {
   const lower = text.toLowerCase()
-  return PROFANITY_LIST.some(word => lower.includes(word))
+  const found = []
+  for (const word of PROFANITY_LIST) {
+    if (lower.includes(word)) {
+      found.push(word)
+    }
+  }
+  // Deduplicate while preserving order
+  return [...new Set(found)]
+}
+
+function containsProfanity(text) {
+  return findProfanity(text).length > 0
 }
 
 function validate({ keywords, language, spiciness }) {
@@ -99,7 +110,11 @@ function validate({ keywords, language, spiciness }) {
   }
 
   if (containsProfanity(keywords)) {
-    return { valid: false, error: 'Видаліть нецензурні або агресивні слова' }
+    return {
+      valid: false,
+      error: 'Видаліть нецензурні або агресивні слова',
+      profanityWords: findProfanity(keywords),
+    }
   }
 
   return { valid: true }
@@ -155,7 +170,11 @@ app.post('/api/generate', async (req, res) => {
   try {
     const validation = validate(req.body)
     if (!validation.valid) {
-      return res.status(400).json({ error: validation.error })
+      const response = { error: validation.error }
+      if (validation.profanityWords) {
+        response.profanityWords = validation.profanityWords
+      }
+      return res.status(400).json(response)
     }
 
     const { keywords, language, spiciness } = req.body

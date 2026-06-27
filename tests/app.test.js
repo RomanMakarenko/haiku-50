@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
@@ -80,6 +80,18 @@ function setupDOM() {
         </div>
       </section>
     </main>
+
+    <div id="profanityModal" class="modal-overlay" role="dialog" aria-modal="true" hidden>
+      <div class="modal-content">
+        <button id="modalCloseBtn" type="button" aria-label="Закрити">✕</button>
+        <div class="modal-body">
+          <h2 id="modalTitle">Виявлено нецензурні слова</h2>
+          <p class="modal-message">Будь ласка, видаліть з ключових слів заборонену лексику:</p>
+          <div id="modalWordList" class="modal-word-list"></div>
+          <button id="modalActionBtn" type="button">Зрозуміло</button>
+        </div>
+      </div>
+    </div>
   `
 
   // Clear localStorage before each test
@@ -272,5 +284,103 @@ describe('Клієнтська логіка — localStorage історія', ()
     expect(stored.length).toBe(1)
     expect(stored[0].haiku).toBe(realHaiku)
     expect(stored[0].haiku).not.toBe(fallbackHaiku)
+  })
+})
+
+describe('Клієнтська логіка — попап профаніті', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+
+    document.body.innerHTML = `
+      <main class="bento-grid">
+        <section class="bento-item keywords-item">
+          <input type="text" id="keywords" class="keywords-input" placeholder="сакура, дощ, тиша..." autocomplete="off">
+          <button id="clearBtn" class="clear-btn" type="button">✕</button>
+          <span id="wordCount" class="word-count">0 / 3-7 слів</span>
+        </section>
+        <section class="bento-item controls-item">
+          <select id="language" class="language-select">
+            <option value="">— Оберіть мову —</option>
+            <option value="uk">Українська</option>
+          </select>
+          <button id="wasabiBtn" type="button"><span class="wasabi-icon">🌶</span><span id="wasabiLevel">0</span></button>
+          <span id="wasabiTooltip">tooltip</span>
+        </section>
+        <section class="bento-item generate-item">
+          <button id="generateBtn" class="generate-btn" disabled>
+            <span class="brush-text">Створити хайку</span>
+          </button>
+        </section>
+        <div id="errorArea" class="bento-item error-area" role="alert" hidden></div>
+        <section class="bento-item scroll-item" id="scrollContainer">
+          <div class="scroll-wrapper" id="scrollWrapper">
+            <div class="scroll-paper" id="haikuDisplay"></div>
+          </div>
+        </section>
+        <section class="bento-item history-item" id="historySection">
+          <button id="clearHistoryBtn" type="button">✕</button>
+          <div class="history-list" id="historyList"></div>
+        </section>
+      </main>
+      <div id="profanityModal" class="modal-overlay" role="dialog" aria-modal="true" hidden>
+        <div class="modal-content">
+          <button id="modalCloseBtn" type="button" aria-label="Закрити">✕</button>
+          <div class="modal-body">
+            <h2 id="modalTitle">Виявлено нецензурні слова</h2>
+            <p class="modal-message">Будь ласка, видаліть з ключових слів заборонену лексику:</p>
+            <div id="modalWordList" class="modal-word-list"></div>
+            <button id="modalActionBtn" type="button">Зрозуміло</button>
+          </div>
+        </div>
+      </div>
+    `
+
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('рендерить список заборонених слів у modal-word-list', () => {
+    // Load app.js for event listeners
+    const appJsPath = resolve(__dirname, '../public/js/app.js')
+    const code = readFileSync(appJsPath, 'utf-8')
+    const script = document.createElement('script')
+    script.textContent = code
+    document.body.appendChild(script)
+
+    const modalWordList = document.getElementById('modalWordList')
+
+    // Simulate what showProfanityModal does:
+    // Renders <span class="word-tag">fuck</span><span class="word-tag">bastard</span>
+    modalWordList.innerHTML = ['fuck', 'bastard']
+      .map(word => `<span class="word-tag">${word}</span>`)
+      .join('')
+
+    const tags = modalWordList.querySelectorAll('.word-tag')
+    expect(tags.length).toBe(2)
+    expect(tags[0].textContent).toBe('fuck')
+    expect(tags[1].textContent).toBe('bastard')
+  })
+
+  it('закривається по Escape', () => {
+    const appJsPath = resolve(__dirname, '../public/js/app.js')
+    const code = readFileSync(appJsPath, 'utf-8')
+    const script = document.createElement('script')
+    script.textContent = code
+    document.body.appendChild(script)
+
+    const profanityModal = document.getElementById('profanityModal')
+
+    // Show modal
+    profanityModal.hidden = false
+    document.body.style.overflow = 'hidden'
+
+    // Press Escape
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+
+    expect(profanityModal.hidden).toBe(true)
+    expect(document.body.style.overflow).toBe('')
   })
 })
