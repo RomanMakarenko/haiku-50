@@ -1,1 +1,1 @@
-скріншот ![Screenshot 2026-06-27 at 20.35.04.png](../../../Desktop/Screenshot%202026-06-27%20at%2020.35.04.png)
+скріншот ![Screenshot 2026-06-27 at 21.50.31.png](../../../Desktop/Screenshot%202026-06-27%20at%2021.50.31.png)

@@ -482,8 +482,9 @@ body {
 .scroll-paper {
   min-height: 80px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 0.6rem;
 }
 
 .haiku-text {
@@ -495,15 +496,14 @@ body {
   animation: scrollReveal 0.6s ease;
 }
 
-.haiku-text .fallback-badge {
-  display: inline-block;
+.fallback-badge {
+  align-self: flex-start;
   font-family: 'Noto Sans JP', sans-serif;
   font-size: 0.6rem;
   color: var(--text-muted);
   border: 1px solid var(--border);
   padding: 0.15rem 0.5rem;
   border-radius: 3px;
-  margin-bottom: 0.6rem;
   letter-spacing: 0.05em;
 }
 

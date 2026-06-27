@@ -207,7 +207,7 @@
   function displayHaiku(haiku, isFallback) {
     let html = ''
     if (isFallback) {
-      html += '<span class="fallback-badge">⚡ fallback</span><br>'
+      html += '<div class="fallback-badge">⚡ fallback</div>'
     }
     html += `<span class="haiku-text">${escapeHtml(haiku)}</span>`
     haikuDisplay.innerHTML = html
