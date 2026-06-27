@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import OpenAI from 'openai'
 
@@ -107,7 +108,7 @@ async function callOpenAI(keywords, language, spiciness) {
   const prompt = buildPrompt(keywords, language, spiciness)
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 15000)
+  const timeout = setTimeout(() => controller.abort(), 60000)
 
   try {
     const response = await openai.chat.completions.create(
@@ -115,9 +116,10 @@ async function callOpenAI(keywords, language, spiciness) {
         model: 'gpt-5-nano-2025-08-07',
         messages: [
           { role: 'system', content: prompt },
+          { role: 'user', content: `Напиши хайку мовою ${language} на основі слів: ${keywords}` },
         ],
-        max_tokens: 200,
-        temperature: 0.8,
+        max_completion_tokens: 4000,
+        temperature: 1,
       },
       { signal: controller.signal }
     )

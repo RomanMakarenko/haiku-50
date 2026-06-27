@@ -23,7 +23,7 @@
   let spiciness = 0
   const STORAGE_KEY = 'haikuHistory'
   const MAX_HISTORY = 100
-  const TIMEOUT_MS = 10000
+  const TIMEOUT_MS = 30000
   const TOOLTIPS = [
     'Рівень гостроти: 0 — спокійна класика',
     'Рівень гостроти: 1 — ледь відчутна нотка',

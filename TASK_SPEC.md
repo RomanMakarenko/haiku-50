@@ -1,0 +1,1 @@
+немає відподі від опен аі сервера, опис помилки в /Users/romanmakarenko/Documents/code/Haiku 50/EVIDENCE.md
