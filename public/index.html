@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haiku 50</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="bonsai-bg"></div>
+
+  <main class="bento-grid">
+    <!-- Header -->
+    <header class="bento-item header-item">
+      <h1 class="site-title">Haiku <span class="title-accent">50</span></h1>
+      <p class="site-subtitle">Мить. Образ. Настрій.</p>
+    </header>
+
+    <!-- Keywords input -->
+    <section class="bento-item keywords-item">
+      <label for="keywords" class="input-label">Ключові слова</label>
+      <div class="input-wrapper">
+        <input
+          type="text"
+          id="keywords"
+          class="keywords-input"
+          placeholder="сакура, дощ, тиша..."
+          autocomplete="off"
+        >
+        <button
+          id="clearBtn"
+          class="clear-btn"
+          type="button"
+          aria-label="Очистити поле"
+          title="Очистити"
+        >✕</button>
+      </div>
+      <span id="wordCount" class="word-count">0 / 3–7 слів</span>
+    </section>
+
+    <!-- Language selector + Wasabi -->
+    <section class="bento-item controls-item">
+      <div class="control-group">
+        <label for="language" class="input-label">Мова</label>
+        <select id="language" class="language-select">
+          <option value="">— Оберіть мову —</option>
+          <option value="uk">Українська</option>
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="ja">日本語</option>
+          <option value="fr">Français</option>
+          <option value="es">Español</option>
+          <option value="it">Italiano</option>
+          <option value="pt">Português</option>
+          <option value="pl">Polski</option>
+          <option value="zh">中文</option>
+          <option value="ko">한국어</option>
+          <option value="ar">العربية</option>
+        </select>
+      </div>
+
+      <div class="control-group wasabi-group">
+        <label class="input-label">50 Васабі</label>
+        <div class="wasabi-wrapper">
+          <button id="wasabiBtn" class="wasabi-btn" type="button" title="Рівень гостроти">
+            <span class="wasabi-icon">🌶</span>
+            <span id="wasabiLevel" class="wasabi-level">0</span>
+          </button>
+          <span class="wasabi-tooltip" id="wasabiTooltip">Рівень гостроти: 0 — спокійна класика</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Generate button -->
+    <section class="bento-item generate-item">
+      <button id="generateBtn" class="generate-btn" disabled>
+        <span class="brush-text">Створити хайку</span>
+      </button>
+    </section>
+
+    <!-- Error area -->
+    <div id="errorArea" class="bento-item error-area" role="alert" hidden></div>
+
+    <!-- Scroll with haiku -->
+    <section class="bento-item scroll-item" id="scrollContainer">
+      <div class="scroll-wrapper" id="scrollWrapper">
+        <div class="scroll-inner">
+          <div class="scroll-paper" id="haikuDisplay">
+            <p class="haiku-placeholder">Натисніть «Створити хайку»,<br>щоб побачити поезію</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- History -->
+    <section class="bento-item history-item" id="historySection">
+      <div class="history-header">
+        <h2 class="history-title">Історія</h2>
+        <button id="clearHistoryBtn" class="clear-history-btn" type="button" title="Очистити історію">✕</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <p class="history-empty">Ще немає збережених хайку</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

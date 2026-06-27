@@ -1,0 +1,21 @@
+{
+  "name": "haiku-50",
+  "version": "1.0.0",
+  "description": "Веб-застосунок для генерації хайку через OpenAI API",
+  "main": "api/server.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "start": "node api/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "openai": "^4.73.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "jsdom": "^25.0.0"
+  },
+  "type": "module",
+  "private": true
+}

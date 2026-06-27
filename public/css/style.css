@@ -1,0 +1,692 @@
+/* =============================================
+   Haiku 50 — Японська естетика, Bento Grid
+   ============================================= */
+
+/* --- Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap');
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f5f0e8;
+  --bg-card: rgba(255, 252, 245, 0.85);
+  --text: #2c2a26;
+  --text-muted: #8a857a;
+  --accent: #c0392b;
+  --accent-light: #e8b4a0;
+  --border: #d4cdc0;
+  --shadow: rgba(44, 42, 38, 0.08);
+  --scroll-paper: #fcf8ef;
+  --brush-color: #1a1a1a;
+  --wasabi-green: #6b8e23;
+  --wasabi-bright: #8fc93a;
+  --error-bg: #fde8e4;
+  --error-text: #c0392b;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.3s ease;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans JP', 'Noto Serif JP', Georgia, 'Times New Roman', serif;
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+  line-height: 1.6;
+  padding: 1rem;
+}
+
+/* --- Bonsai Background (low contrast watermark) --- */
+.bonsai-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 90%, rgba(107, 142, 35, 0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 15% 20%, rgba(107, 142, 35, 0.05) 0%, transparent 60%);
+}
+
+.bonsai-bg::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 400px;
+  background:
+    /* Trunk */
+    linear-gradient(135deg, transparent 48%, var(--border) 48%, var(--border) 52%, transparent 52%) no-repeat 50% 70% / 12px 120px,
+    /* Branch left */
+    linear-gradient(45deg, transparent 48%, var(--border) 48%, var(--border) 52%, transparent 52%) no-repeat 35% 50% / 60px 6px,
+    /* Branch right */
+    linear-gradient(-45deg, transparent 48%, var(--border) 48%, var(--border) 52%, transparent 52%) no-repeat 65% 40% / 70px 6px,
+    /* Branch top */
+    linear-gradient(-135deg, transparent 48%, var(--border) 48%, var(--border) 52%, transparent 52%) no-repeat 50% 25% / 50px 5px,
+    /* Foliage clusters */
+    radial-gradient(circle at 35% 45%, rgba(107, 142, 35, 0.08) 0%, transparent 30px),
+    radial-gradient(circle at 65% 35%, rgba(107, 142, 35, 0.08) 0%, transparent 25px),
+    radial-gradient(circle at 50% 20%, rgba(107, 142, 35, 0.06) 0%, transparent 20px),
+    radial-gradient(circle at 25% 50%, rgba(107, 142, 35, 0.05) 0%, transparent 18px),
+    /* Pot */
+    radial-gradient(ellipse 40px 20px at 50% 98%, var(--border) 0%, transparent 100%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* --- Bento Grid --- */
+.bento-grid {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.bento-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+  backdrop-filter: blur(6px);
+  transition: box-shadow var(--transition);
+}
+
+.bento-item:hover {
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+/* --- Header (full width) --- */
+.header-item {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 1.25rem 1rem 0.75rem;
+}
+
+.site-title {
+  font-family: 'Noto Serif JP', Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+
+.title-accent {
+  color: var(--accent);
+  font-size: 1.5rem;
+}
+
+.site-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.3em;
+  margin-top: 0.25rem;
+}
+
+/* --- Keywords input (full width) --- */
+.keywords-item {
+  grid-column: 1 / -1;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.keywords-input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.keywords-input:focus {
+  border-color: var(--accent-light);
+}
+
+.keywords-input::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.clear-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.clear-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.word-count {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+  text-align: right;
+}
+
+/* --- Controls (language + wasabi side by side) --- */
+.controls-item {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.control-group {
+  flex: 1;
+}
+
+.language-select {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  appearance: auto;
+}
+
+.language-select:focus {
+  border-color: var(--accent-light);
+}
+
+/* --- Wasabi --- */
+.wasabi-group {
+  flex: 0 0 auto;
+  min-width: 100px;
+}
+
+.wasabi-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.wasabi-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all var(--transition);
+}
+
+.wasabi-btn:hover {
+  border-color: var(--wasabi-green);
+  background: rgba(107, 142, 35, 0.06);
+}
+
+.wasabi-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.wasabi-level {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--wasabi-green);
+  min-width: 1rem;
+  text-align: center;
+}
+
+/* Tooltip */
+.wasabi-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+  z-index: 10;
+}
+
+.wasabi-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--text);
+}
+
+.wasabi-wrapper:hover .wasabi-tooltip {
+  opacity: 1;
+}
+
+/* Wasabi intensity levels */
+.wasabi-btn[data-level="0"] { color: var(--text-muted); }
+.wasabi-btn[data-level="1"] { color: #8fbc3f; }
+.wasabi-btn[data-level="2"] { color: var(--wasabi-green); }
+.wasabi-btn[data-level="3"] { color: #5c7a1f; }
+.wasabi-btn[data-level="4"] { color: #a55b1a; }
+.wasabi-btn[data-level="5"] { color: #c0392b; }
+.wasabi-btn[data-level="6"] { color: #8b0000; }
+
+.wasabi-btn[data-level="4"],
+.wasabi-btn[data-level="5"],
+.wasabi-btn[data-level="6"] {
+  border-color: currentColor;
+}
+
+.wasabi-btn[data-level="4"] { background: rgba(165, 91, 26, 0.08); }
+.wasabi-btn[data-level="5"] { background: rgba(192, 57, 43, 0.08); }
+.wasabi-btn[data-level="6"] { background: rgba(139, 0, 0, 0.08); }
+
+/* --- Generate button (calligraphy brush style) --- */
+.generate-item {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 0.75rem 1.25rem;
+}
+
+.generate-btn {
+  font-family: 'Noto Serif JP', Georgia, serif;
+  font-size: 1.1rem;
+  padding: 0.65rem 2.5rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--brush-color);
+  color: #f5f0e8;
+  cursor: pointer;
+  letter-spacing: 0.12em;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Brush-stroke texture overlay */
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      rgba(255, 255, 255, 0.04) 2px,
+      transparent 4px,
+      transparent 6px
+    );
+  pointer-events: none;
+}
+
+.generate-btn:hover:not(:disabled) {
+  background: #2c2a26;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.generate-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.generate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: #666;
+}
+
+.brush-text {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+}
+
+/* Spinning animation when loading */
+.generate-btn.loading {
+  pointer-events: none;
+}
+
+.generate-btn.loading .brush-text::after {
+  content: ' ◌';
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Error area --- */
+.error-area {
+  grid-column: 1 / -1;
+  background: var(--error-bg);
+  color: var(--error-text);
+  border-color: var(--accent-light);
+  font-size: 0.85rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  display: none;
+}
+
+.error-area[hidden] {
+  display: none;
+}
+
+.error-area:not([hidden]) {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+/* --- Scroll with haiku --- */
+.scroll-item {
+  grid-column: 1 / -1;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.scroll-wrapper {
+  position: relative;
+  background: var(--scroll-paper);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+  overflow: hidden;
+  min-height: 0;
+  transition: min-height 0.5s ease;
+}
+
+/* Scroll top/bottom decorative rolls */
+.scroll-wrapper::before,
+.scroll-wrapper::after {
+  content: '';
+  display: block;
+  height: 8px;
+  background: linear-gradient(
+    to bottom,
+    var(--border),
+    transparent
+  );
+}
+
+.scroll-wrapper::after {
+  background: linear-gradient(
+    to top,
+    var(--border),
+    transparent
+  );
+}
+
+.scroll-inner {
+  padding: 1.5rem 1.5rem;
+  text-align: center;
+}
+
+.scroll-paper {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.haiku-text {
+  font-family: 'Noto Serif JP', Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.9;
+  white-space: pre-line;
+  color: var(--text);
+  animation: scrollReveal 0.6s ease;
+}
+
+.haiku-text .fallback-badge {
+  display: inline-block;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.05em;
+}
+
+.haiku-placeholder {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Scroll reveal animation */
+@keyframes scrollReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll unrolled state */
+.scroll-wrapper.unrolled {
+  min-height: 120px;
+}
+
+/* --- History --- */
+.history-item {
+  grid-column: 1 / -1;
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.history-title {
+  font-family: 'Noto Serif JP', Georgia, serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.clear-history-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: all var(--transition);
+}
+
+.clear-history-btn:hover {
+  background: var(--error-bg);
+  border-color: var(--accent-light);
+  color: var(--error-text);
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.history-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.history-empty {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.history-entry {
+  font-size: 0.7rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg);
+  border-radius: 4px;
+  border-left: 3px solid var(--accent-light);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.history-entry:hover {
+  background: var(--scroll-paper);
+}
+
+.history-entry-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Noto Serif JP', Georgia, serif;
+  font-size: 0.72rem;
+}
+
+.history-entry-meta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  body {
+    padding: 0.6rem;
+  }
+
+  .bento-grid {
+    gap: 0.5rem;
+  }
+
+  .bento-item {
+    padding: 0.75rem 0.9rem;
+  }
+
+  .site-title {
+    font-size: 1.4rem;
+  }
+
+  .controls-item {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .wasabi-group {
+    min-width: auto;
+  }
+
+  .generate-btn {
+    font-size: 0.95rem;
+    padding: 0.55rem 1.8rem;
+  }
+
+  .scroll-inner {
+    padding: 1rem 1rem;
+  }
+
+  .haiku-text {
+    font-size: 0.92rem;
+  }
+
+  .history-item {
+    max-height: 180px;
+  }
+}
+
+/* --- Accessibility --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
