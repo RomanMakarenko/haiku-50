@@ -391,9 +391,43 @@ async function generate() {
 function loadHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) state.history = JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        // Backward compatibility: migrate old format entries
+        state.history = parsed
+          .map((item) => {
+            // Already new format
+            if (Array.isArray(item.lines)) return item;
+            // Old format: { haiku, language, spiciness, keywords, timestamp }
+            if (item.haiku) {
+              const langNames = {
+                uk: "Ukrainian", en: "English", de: "German",
+                ja: "Japanese", fr: "French", es: "Spanish",
+                it: "Italian", pt: "Portuguese", pl: "Polish",
+                zh: "Chinese", ko: "Korean", ar: "Arabic",
+              };
+              const date = new Date(item.timestamp || Date.now());
+              const timeLabel =
+                String(date.getHours()).padStart(2, "0") + ":" +
+                String(date.getMinutes()).padStart(2, "0");
+              return {
+                id: item.timestamp || Date.now(),
+                lines: item.haiku.split("\n").filter(Boolean),
+                haiku: item.haiku,
+                langLabel: langNames[item.language] || item.language,
+                spice: item.spiciness ?? 0,
+                timeLabel,
+              };
+            }
+            return null; // unknown format, skip
+          })
+          .filter(Boolean);
+      }
+    }
   } catch (_) {
     /* corrupted data, start fresh */
+    state.history = [];
   }
 }
 
