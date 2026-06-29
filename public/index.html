@@ -1,113 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Haiku 50</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500&family=Noto+Serif+JP:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/app.js" defer></script>
 </head>
 <body>
-  <div class="bonsai-bg"></div>
+  <div class="splash-screen" aria-hidden="true">
+    <svg class="splash-logo" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <circle class="splash-ring" cx="600" cy="330" r="150"></circle>
+      <path class="splash-drop" d="M600 250 a60 60 0 1 1 -42 17 z" transform="rotate(45 600 300)"></path>
+      <text class="splash-title" x="600" y="600" text-anchor="middle">Haiku 50</text>
+      <text class="splash-subtitle" x="600" y="690" text-anchor="middle">俳句</text>
+    </svg>
+  </div>
 
-  <main class="bento-grid">
-    <!-- Header -->
-    <header class="bento-item header-item">
-      <h1 class="site-title">Haiku <span class="title-accent">50</span></h1>
-      <p class="site-subtitle">Мить. Образ. Настрій.</p>
-    </header>
-
-    <!-- Keywords input -->
-    <section class="bento-item keywords-item">
-      <label for="keywords" class="input-label">Ключові слова</label>
-      <div class="input-wrapper">
-        <input
-          type="text"
-          id="keywords"
-          class="keywords-input"
-          placeholder="сакура, дощ, тиша..."
-          autocomplete="off"
-        >
-        <button
-          id="clearBtn"
-          class="clear-btn"
-          type="button"
-          aria-label="Очистити поле"
-          title="Очистити"
-        >✕</button>
-      </div>
-      <span id="wordCount" class="word-count">0 / 3–7 слів</span>
-    </section>
-
-    <!-- Language selector + Wasabi -->
-    <section class="bento-item controls-item">
-      <div class="control-group">
-        <label for="language" class="input-label">Мова</label>
-        <select id="language" class="language-select">
-          <option value="">— Оберіть мову —</option>
-          <option value="uk">Українська</option>
-          <option value="en">English</option>
-          <option value="de">Deutsch</option>
-          <option value="ja">日本語</option>
-          <option value="fr">Français</option>
-          <option value="es">Español</option>
-          <option value="it">Italiano</option>
-          <option value="pt">Português</option>
-          <option value="pl">Polski</option>
-          <option value="zh">中文</option>
-          <option value="ko">한국어</option>
-          <option value="ar">العربية</option>
-        </select>
-      </div>
-
-      <div class="control-group wasabi-group">
-        <label class="input-label">50 Васабі</label>
-        <div class="wasabi-wrapper">
-          <button id="wasabiBtn" class="wasabi-btn" type="button" title="Рівень гостроти">
-            <span class="wasabi-icon">🌶</span>
-            <span id="wasabiLevel" class="wasabi-level">0</span>
-          </button>
-          <span class="wasabi-tooltip" id="wasabiTooltip">Рівень гостроти: 0 — спокійна класика</span>
+  <div class="page-shell">
+    <div id="h50-screen" class="screen">
+      <header class="hero">
+        <div class="brand">
+          <h1>Haiku 50</h1>
+          <span>俳句</span>
         </div>
-      </div>
-    </section>
+        <p>Enter 3 to 7 words or short phrases — then add some heat with the "50 wasabi" button.</p>
+      </header>
 
-    <!-- Generate button -->
-    <section class="bento-item generate-item">
-      <button id="generateBtn" class="generate-btn" disabled>
-        <span class="brush-text">Створити хайку</span>
-      </button>
-    </section>
-
-    <!-- Error area -->
-    <div id="errorArea" class="bento-item error-area" role="alert" hidden></div>
-
-    <!-- Scroll with haiku -->
-    <section class="bento-item scroll-item" id="scrollContainer">
-      <div class="scroll-wrapper" id="scrollWrapper">
-        <div class="scroll-inner">
-          <div class="scroll-paper" id="haikuDisplay">
-            <p class="haiku-placeholder">Натисніть «Створити хайку»,<br>щоб побачити поезію</p>
+      <main class="grid" id="app-grid">
+        <!-- Result card -->
+        <section class="card result-card">
+          <div class="kicker">
+            <span class="dot"></span>
+            <span>Haiku</span>
           </div>
-        </div>
-      </div>
-    </section>
+          <div class="result-stage" id="result-stage" aria-live="polite"></div>
+          <div class="done-meta is-hidden" id="done-meta"></div>
+        </section>
 
-    <!-- History -->
-    <section class="bento-item history-item" id="historySection">
-      <div class="history-header">
-        <h2 class="history-title">Історія</h2>
-        <button id="clearHistoryBtn" class="clear-history-btn" type="button" title="Очистити історію">✕</button>
-      </div>
-      <div class="history-list" id="historyList">
-        <p class="history-empty">Ще немає збережених хайку</p>
-      </div>
-    </section>
-  </main>
+        <!-- Keywords -->
+        <section class="card keywords-card">
+          <div class="card-head">
+            <span>Keywords</span>
+            <button type="button" class="clear-button" id="clear-keywords" disabled>Clear</button>
+          </div>
+          <textarea id="keywords" rows="3" placeholder="sakura, train, rain"></textarea>
+          <div class="count-label" id="count-label">3–7 needed</div>
+        </section>
+
+        <!-- Language -->
+        <section class="card language-card" id="language-card">
+          <span class="field-title">Language</span>
+          <button type="button" class="language-button" id="language-button" aria-haspopup="listbox" aria-expanded="false">
+            <span id="language-label">Choose language</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div class="language-menu is-hidden" id="language-menu" role="listbox"></div>
+        </section>
+
+        <!-- Wasabi -->
+        <section class="card wasabi-card">
+          <button type="button" class="wasabi-button" id="wasabi-button">
+            <span class="wasabi-drop" aria-hidden="true"></span>
+            50 wasabi
+          </button>
+          <div class="wasabi-status">
+            <div class="wasabi-dots" id="wasabi-dots" aria-hidden="true"></div>
+            <div class="spice-label" id="spice-label">Heat level: 0</div>
+            <div class="spice-max is-hidden" id="spice-max">🌶 As hot as it gets — tap again to cool down</div>
+          </div>
+        </section>
+
+        <!-- History -->
+        <section class="card history-card">
+          <div class="card-head history-head">
+            <span>History</span>
+            <span id="history-count"></span>
+            <button id="clear-history-btn" class="clear-history-btn" type="button" title="Clear history">✕</button>
+          </div>
+          <div class="history-empty" id="history-empty">No haiku yet</div>
+          <div class="history-list" id="history-list"></div>
+        </section>
+
+        <!-- Info + Generate -->
+        <section class="info-card">
+          <div class="info-panel">
+            <div>5·7·5</div>
+            <p>A haiku — three lines, one breath. Words set the image, wasabi sets the mood.</p>
+          </div>
+          <button type="button" class="generate-button" id="generate-button">Generate haiku</button>
+        </section>
+      </main>
+    </div>
+  </div>
 
   <!-- Profanity Modal -->
-  <div id="profanityModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+  <div id="profanityModal" class="modal-overlay" role="dialog" aria-modal="true" hidden>
     <div class="modal-content">
-      <button id="modalCloseBtn" class="modal-close-btn" type="button" aria-label="Закрити">✕</button>
+      <button id="modalCloseBtn" class="modal-close-btn" type="button" aria-label="Close">✕</button>
       <div class="modal-body">
         <div class="modal-icon">⚠️</div>
         <h2 id="modalTitle" class="modal-title">Виявлено нецензурні слова</h2>
@@ -117,7 +110,5 @@
       </div>
     </div>
   </div>
-
-  <script src="js/app.js"></script>
 </body>
 </html>

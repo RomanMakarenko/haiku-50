@@ -1,399 +1,522 @@
 /* =============================================
    Haiku 50 — Client-side logic
+   Architecture based on Haiku-50 design
+   Express backend integration
    ============================================= */
 
 (function () {
   'use strict'
 
-  // --- DOM refs ---
-  const keywordsInput = document.getElementById('keywords')
-  const clearBtn = document.getElementById('clearBtn')
-  const wordCount = document.getElementById('wordCount')
-  const languageSelect = document.getElementById('language')
-  const wasabiBtn = document.getElementById('wasabiBtn')
-  const wasabiLevel = document.getElementById('wasabiLevel')
-  const wasabiTooltip = document.getElementById('wasabiTooltip')
-  const generateBtn = document.getElementById('generateBtn')
-  const errorArea = document.getElementById('errorArea')
-  const haikuDisplay = document.getElementById('haikuDisplay')
-  const historyList = document.getElementById('historyList')
-  const clearHistoryBtn = document.getElementById('clearHistoryBtn')
+const LANGS = [
+  { code: "uk", label: "Ukrainian", native: "Українська" },
+  { code: "en", label: "English", native: "English" },
+  { code: "de", label: "German", native: "Deutsch" },
+  { code: "ja", label: "Japanese", native: "日本語" },
+  { code: "fr", label: "French", native: "Français" },
+  { code: "es", label: "Spanish", native: "Español" },
+  { code: "it", label: "Italian", native: "Italiano" },
+  { code: "pt", label: "Portuguese", native: "Português" },
+  { code: "pl", label: "Polish", native: "Polski" },
+  { code: "zh", label: "Chinese", native: "中文" },
+  { code: "ko", label: "Korean", native: "한국어" },
+  { code: "ar", label: "Arabic", native: "العربية" },
+];
 
-  // --- State ---
-  let spiciness = 0
-  const STORAGE_KEY = 'haikuHistory'
-  const MAX_HISTORY = 100
-  const TIMEOUT_MS = 30000
-  const TOOLTIPS = [
-    'Рівень гостроти: 0 — спокійна класика',
-    'Рівень гостроти: 1 — ледь відчутна нотка',
-    'Рівень гостроти: 2 — легке пожвавлення',
-    'Рівень гостроти: 3 — середня гострота',
-    'Рівень гостроти: 4 — гаряче, майже пекучо',
-    'Рівень гостроти: 5 — дуже гостро!',
-    'Рівень гостроти: 6 — максимальний васабі!',
-  ]
+const SPICE = [
+  "Calm, traditional, contemplative haiku about nature and transience.",
+  "A light, quiet sketch with a gentle mood.",
+  "Slightly unexpected, with subtle irony.",
+  "Playful, with humor and a surprising twist.",
+  "Bold and sharp, with an absurd image.",
+  "Very spicy, chaotic, grotesque and funny.",
+  "Maximum heat: absurd, chaotic, surreal and dark-humored — yet still three lines of haiku.",
+];
 
-  // --- Word count & validation ---
-  function getWordCount() {
-    const text = keywordsInput.value.trim()
-    if (!text) return 0
-    return text.split(',').map(w => w.trim()).filter(Boolean).length
+const STORAGE_KEY = "haikuHistory";
+const MAX_HISTORY = 100;
+const TIMEOUT_MS = 30000;
+
+const state = {
+  keywords: "",
+  lang: "",
+  spice: 0,
+  langOpen: false,
+  resultState: "empty", // "empty" | "loading" | "error" | "done"
+  errorMsg: "",
+  lines: [],
+  doneLang: "",
+  doneSpice: "",
+  history: [],
+};
+
+const els = {};
+
+function labelOf(code) {
+  const lang = LANGS.find((item) => item.code === code);
+  return lang ? lang.label : "";
+}
+
+function phrases() {
+  return state.keywords
+    .split(/[,\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+// ─── Render functions ──────────────────────────────────────
+
+function renderEmpty() {
+  els.resultStage.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-ring"></div>
+      <div class="empty-title">No haiku yet</div>
+      <div class="empty-copy">Enter your words and press "Generate"</div>
+    </div>
+  `;
+  els.doneMeta.classList.add("is-hidden");
+}
+
+function renderLoading() {
+  els.resultStage.innerHTML = `
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-text">Composing the lines…</div>
+    </div>
+  `;
+  els.doneMeta.classList.add("is-hidden");
+}
+
+function renderError() {
+  els.resultStage.innerHTML = `
+    <div class="error-state">
+      <div class="error-icon">!</div>
+      <div class="error-text"></div>
+    </div>
+  `;
+  els.resultStage.querySelector(".error-text").textContent = state.errorMsg;
+  els.doneMeta.classList.add("is-hidden");
+}
+
+function renderDone() {
+  els.resultStage.innerHTML = '<div class="done-state"></div>';
+  const wrap = els.resultStage.querySelector(".done-state");
+
+  state.lines.forEach((line) => {
+    const item = document.createElement("div");
+    item.className = "haiku-line";
+    item.textContent = line;
+    wrap.append(item);
+  });
+
+  els.doneMeta.innerHTML = "";
+  const lang = document.createElement("span");
+  lang.textContent = state.doneLang;
+  const spice = document.createElement("span");
+  spice.textContent = state.doneSpice;
+  els.doneMeta.append(lang, spice);
+  els.doneMeta.classList.remove("is-hidden");
+}
+
+function renderResult() {
+  if (state.resultState === "loading") renderLoading();
+  else if (state.resultState === "error") renderError();
+  else if (state.resultState === "done") renderDone();
+  else renderEmpty();
+}
+
+function renderKeywords() {
+  if (els.keywords.value !== state.keywords) {
+    els.keywords.value = state.keywords;
   }
 
-  function hasMinWords() {
-    return getWordCount() >= 3
+  const count = phrases().length;
+  els.countLabel.textContent =
+    count === 0
+      ? "3–7 needed"
+      : count + (count >= 3 && count <= 7 ? " of 3–7 ✓" : " of 3–7");
+
+  els.clearKeywords.disabled = count === 0;
+}
+
+function renderLanguage() {
+  els.languageLabel.textContent = state.lang
+    ? labelOf(state.lang)
+    : "Choose language";
+  els.languageButton.classList.toggle("has-value", Boolean(state.lang));
+  els.languageButton.setAttribute("aria-expanded", String(state.langOpen));
+  els.languageMenu.classList.toggle("is-hidden", !state.langOpen);
+  els.languageMenu.innerHTML = "";
+
+  LANGS.forEach((lang) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "language-option";
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", String(state.lang === lang.code));
+    option.innerHTML = `<span></span><span class="language-native"></span>`;
+    option.children[0].textContent = lang.label;
+    option.children[1].textContent = lang.native;
+    option.addEventListener("click", () => {
+      state.lang = lang.code;
+      state.langOpen = false;
+      render();
+    });
+    els.languageMenu.append(option);
+  });
+}
+
+function renderWasabi() {
+  els.wasabiDots.innerHTML = "";
+
+  for (let index = 0; index < 6; index += 1) {
+    const dot = document.createElement("span");
+    dot.className = "wasabi-dot";
+    dot.classList.toggle("is-active", index < state.spice);
+    els.wasabiDots.append(dot);
   }
 
-  function hasMaxWords() {
-    return getWordCount() > 7
-  }
+  els.spiceLabel.textContent = "Heat level: " + state.spice;
+  els.spiceLabel.classList.toggle("is-active", state.spice > 0);
+  els.spiceMax.classList.toggle("is-hidden", state.spice !== 6);
+}
 
-  function hasLanguage() {
-    return languageSelect.value !== ''
-  }
+function renderHistory() {
+  els.historyCount.textContent =
+    state.history.length > 0 ? state.history.length + " saved" : "";
+  els.historyEmpty.classList.toggle("is-hidden", state.history.length > 0);
+  els.historyList.classList.toggle("is-hidden", state.history.length === 0);
+  els.historyList.innerHTML = "";
 
-  function updateWordCount() {
-    const count = getWordCount()
-    wordCount.textContent = `${count} / 3–7 слів`
-  }
+  state.history.forEach((item, index) => {
+    const card = document.createElement("div");
+    card.className = "history-item";
 
-  function updateGenerateButton() {
-    const errors = []
+    const lines = document.createElement("div");
+    lines.className = "history-lines";
+    item.lines.forEach((line) => {
+      const row = document.createElement("div");
+      row.textContent = line;
+      lines.append(row);
+    });
 
-    if (!hasMinWords()) {
-      errors.push('Введіть щонайменше 3 ключові слова або фрази')
+    const tags = document.createElement("div");
+    tags.className = "history-tags";
+    const lang = document.createElement("span");
+    lang.textContent = item.langLabel;
+    const spice = document.createElement("span");
+    spice.textContent = "wasabi " + item.spice;
+    const time = document.createElement("span");
+    time.textContent = item.timeLabel;
+    tags.append(lang, spice, time);
+
+    card.append(lines, tags);
+    els.historyList.append(card);
+  });
+}
+
+function renderGenerateButton() {
+  const loading = state.resultState === "loading";
+  els.generateButton.textContent = loading ? "Generating…" : "Generate haiku";
+  els.generateButton.disabled = loading;
+}
+
+function render() {
+  renderResult();
+  renderKeywords();
+  renderLanguage();
+  renderWasabi();
+  renderHistory();
+  renderGenerateButton();
+}
+
+// ─── Profanity Modal ──────────────────────────────────────
+
+function showProfanityModal(words) {
+  els.modalWordList.innerHTML = words
+    .map((word) => `<span class="word-tag">${escapeHtml(word)}</span>`)
+    .join("");
+  els.profanityModal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function hideProfanityModal() {
+  els.profanityModal.hidden = true;
+  document.body.style.overflow = "";
+}
+
+// ─── API call ─────────────────────────────────────────────
+
+async function generateHaiku(keywords, language, spiciness) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keywords, language, spiciness }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const err = new Error(
+        data.error || "Something went wrong. Try again."
+      );
+      if (data.profanityWords) {
+        err.profanityWords = data.profanityWords;
+      }
+      throw err;
     }
-    if (hasMaxWords()) {
-      errors.push('Не більше 7 ключових слів або фраз')
-    }
-    if (!hasLanguage()) {
-      errors.push('Оберіть мову генерації')
+
+    return data;
+  } catch (err) {
+    clearTimeout(timeout);
+
+    if (err.name === "AbortError") {
+      throw new Error("The request took too long. Please try again.");
     }
 
-    if (errors.length === 0) {
-      generateBtn.disabled = false
-      hideError()
-    } else {
-      generateBtn.disabled = true
-      // Show the first relevant error
-      if (hasMaxWords()) {
-        showError('Не більше 7 ключових слів або фраз')
-      } else if (!hasMinWords()) {
-        showError('Введіть щонайменше 3 ключові слова або фрази')
-      } else if (!hasLanguage()) {
-        showError('Оберіть мову генерації')
+    if (err instanceof TypeError && err.message === "Failed to fetch") {
+      throw new Error(
+        "Server is temporarily unavailable. Please try later."
+      );
+    }
+
+    throw err;
+  }
+}
+
+// ─── Main generate handler ────────────────────────────────
+
+async function generate() {
+  if (state.resultState === "loading") return;
+
+  const parts = phrases();
+
+  // Validation
+  if (parts.length < 3) {
+    state.resultState = "error";
+    state.errorMsg = "Enter 3 to 7 words or short phrases";
+    render();
+    return;
+  }
+
+  if (parts.length > 7) {
+    state.resultState = "error";
+    state.errorMsg = "Too many — keep it to 7 words or phrases at most";
+    render();
+    return;
+  }
+
+  if (!state.lang) {
+    state.resultState = "error";
+    state.errorMsg = "Choose a generation language";
+    render();
+    return;
+  }
+
+  const langName = labelOf(state.lang);
+  const spice = state.spice;
+
+  state.resultState = "loading";
+  state.errorMsg = "";
+  render();
+
+  try {
+    const result = await generateHaiku(
+      state.keywords,
+      state.lang,
+      state.spice
+    );
+
+    let lines = (result.haiku || "")
+      .trim()
+      .split("\n")
+      .filter(Boolean);
+
+    if (lines.length === 0) {
+      lines = ["Silence", "where words should be", "a blank page"];
+    }
+
+    lines = lines.slice(0, 3);
+
+    if (!result.fallback) {
+      const date = new Date();
+      const timeLabel =
+        String(date.getHours()).padStart(2, "0") +
+        ":" +
+        String(date.getMinutes()).padStart(2, "0");
+      const item = {
+        id: Date.now(),
+        lines,
+        haiku: result.haiku,
+        langLabel: langName,
+        spice,
+        timeLabel,
+      };
+      state.history = [item, ...state.history].slice(0, MAX_HISTORY);
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.history));
+      } catch (_) {
+        /* localStorage full or unavailable */
       }
     }
-  }
 
-  // --- Modal refs ---
-  const profanityModal = document.getElementById('profanityModal')
-  const modalCloseBtn = document.getElementById('modalCloseBtn')
-  const modalActionBtn = document.getElementById('modalActionBtn')
-  const modalWordList = document.getElementById('modalWordList')
-
-  // --- Error display ---
-  function showError(message) {
-    errorArea.textContent = message
-    errorArea.hidden = false
-  }
-
-  function hideError() {
-    errorArea.textContent = ''
-    errorArea.hidden = true
-  }
-
-  // --- Profanity modal ---
-  function showProfanityModal(words) {
-    // Render word tags
-    modalWordList.innerHTML = words
-      .map(word => `<span class="word-tag">${escapeHtml(word)}</span>`)
-      .join('')
-
-    profanityModal.hidden = false
-
-    // Prevent body scrolling while modal is open
-    document.body.style.overflow = 'hidden'
-  }
-
-  function hideProfanityModal() {
-    profanityModal.hidden = true
-    document.body.style.overflow = ''
-    modalWordList.innerHTML = ''
-  }
-
-  // Close modal on overlay click (click outside content)
-  profanityModal.addEventListener('click', (e) => {
-    if (e.target === profanityModal) {
-      hideProfanityModal()
+    state.resultState = "done";
+    state.lines = lines;
+    state.doneLang = langName;
+    state.doneSpice = "wasabi " + spice;
+    render();
+  } catch (err) {
+    if (err.profanityWords) {
+      showProfanityModal(err.profanityWords);
+      state.resultState = "empty";
+      render();
+      return;
     }
-  })
 
-  // Close with Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !profanityModal.hidden) {
-      hideProfanityModal()
-    }
-  })
-
-  // --- Wasabi (spiciness) ---
-  function updateWasabi() {
-    wasabiLevel.textContent = spiciness
-    wasabiBtn.dataset.level = spiciness
-    wasabiTooltip.textContent = TOOLTIPS[spiciness]
-
-    // Update wasabi icon intensity
-    const icon = wasabiBtn.querySelector('.wasabi-icon')
-    if (spiciness <= 2) {
-      icon.textContent = '🌶'
-    } else if (spiciness <= 4) {
-      icon.textContent = '🌶🌶'
-    } else {
-      icon.textContent = '🌶🌶🌶'
-    }
+    state.resultState = "error";
+    state.errorMsg = err.message;
+    render();
   }
+}
 
-  function cycleWasabi() {
-    spiciness = (spiciness + 1) % 7
-    updateWasabi()
+// ─── History persistence ──────────────────────────────────
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) state.history = JSON.parse(raw);
+  } catch (_) {
+    /* corrupted data, start fresh */
   }
+}
 
-  // --- History ---
-  function getHistory() {
+// ─── DOM binding ──────────────────────────────────────────
+
+function bindElements() {
+  els.resultStage = document.getElementById("result-stage");
+  els.doneMeta = document.getElementById("done-meta");
+  els.keywords = document.getElementById("keywords");
+  els.countLabel = document.getElementById("count-label");
+  els.clearKeywords = document.getElementById("clear-keywords");
+  els.languageButton = document.getElementById("language-button");
+  els.languageLabel = document.getElementById("language-label");
+  els.languageMenu = document.getElementById("language-menu");
+  els.languageCard = document.getElementById("language-card");
+  els.wasabiButton = document.getElementById("wasabi-button");
+  els.wasabiDots = document.getElementById("wasabi-dots");
+  els.spiceLabel = document.getElementById("spice-label");
+  els.spiceMax = document.getElementById("spice-max");
+  els.historyCount = document.getElementById("history-count");
+  els.historyEmpty = document.getElementById("history-empty");
+  els.historyList = document.getElementById("history-list");
+  els.generateButton = document.getElementById("generate-button");
+  els.clearHistoryBtn = document.getElementById("clear-history-btn");
+  els.profanityModal = document.getElementById("profanityModal");
+  els.modalCloseBtn = document.getElementById("modalCloseBtn");
+  els.modalActionBtn = document.getElementById("modalActionBtn");
+  els.modalWordList = document.getElementById("modalWordList");
+  els.h50Screen = document.getElementById("h50-screen");
+}
+
+// ─── Event binding ────────────────────────────────────────
+
+function bindEvents() {
+  // Keywords input
+  els.keywords.addEventListener("input", (event) => {
+    state.keywords = event.target.value;
+    renderKeywords();
+  });
+
+  // Language dropdown toggle
+  els.languageButton.addEventListener("click", () => {
+    state.langOpen = !state.langOpen;
+    renderLanguage();
+  });
+
+  // Close language dropdown on outside click
+  document.addEventListener("click", (event) => {
+    if (!els.languageCard.contains(event.target) && state.langOpen) {
+      state.langOpen = false;
+      renderLanguage();
+    }
+  });
+
+  // Wasabi cycling
+  els.wasabiButton.addEventListener("click", () => {
+    state.spice = state.spice < 6 ? state.spice + 1 : 0;
+    renderWasabi();
+  });
+
+  // Generate
+  els.generateButton.addEventListener("click", generate);
+
+  // Clear keywords
+  els.clearKeywords.addEventListener("click", () => {
+    state.keywords = "";
+    els.keywords.value = "";
+    els.keywords.focus();
+    renderKeywords();
+  });
+
+  // Clear history
+  els.clearHistoryBtn.addEventListener("click", () => {
+    state.history = [];
     try {
-      const data = localStorage.getItem(STORAGE_KEY)
-      return data ? JSON.parse(data) : []
-    } catch {
-      return []
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_) {
+      /* ignore */
     }
-  }
-
-  function saveToHistory(haiku, language, spiciness, keywords) {
-    let history = getHistory()
-
-    const entry = {
-      haiku,
-      language,
-      spiciness,
-      keywords,
-      timestamp: Date.now(),
-    }
-
-    history.unshift(entry)
-
-    if (history.length > MAX_HISTORY) {
-      history = history.slice(0, MAX_HISTORY)
-    }
-
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
-    } catch {
-      // localStorage might be full
-    }
-
-    renderHistory()
-  }
-
-  function renderHistory() {
-    const history = getHistory()
-
-    if (history.length === 0) {
-      historyList.innerHTML = '<p class="history-empty">Ще немає збережених хайку</p>'
-      return
-    }
-
-    historyList.innerHTML = history.map((entry, index) => {
-      const firstLine = entry.haiku.split('\n')[0]
-      const langNames = {
-        uk: 'Укр', en: 'Eng', de: 'Deu', ja: '日', fr: 'Fra',
-        es: 'Esp', it: 'Ita', pt: 'Por', pl: 'Pol', zh: '中', ko: '한', ar: 'ع',
-      }
-      const langLabel = langNames[entry.language] || entry.language
-      return `
-        <div class="history-entry" data-index="${index}">
-          <div class="history-entry-text">${escapeHtml(firstLine)}</div>
-          <div class="history-entry-meta">
-            <span>🌶 ${entry.spiciness}</span>
-            <span>${langLabel}</span>
-          </div>
-        </div>
-      `
-    }).join('')
-
-    // Click to show full haiku in scroll
-    historyList.querySelectorAll('.history-entry').forEach((el) => {
-      el.addEventListener('click', () => {
-        const index = parseInt(el.dataset.index, 10)
-        const history = getHistory()
-        if (history[index]) {
-          displayHaiku(history[index].haiku, false)
-        }
-      })
-    })
-  }
-
-  function clearHistory() {
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // ignore
-    }
-    renderHistory()
-  }
-
-  // --- Display haiku in scroll ---
-  function displayHaiku(haiku, isFallback) {
-    let html = ''
-    if (isFallback) {
-      html += '<div class="fallback-badge">⚡ fallback</div>'
-    }
-    html += `<span class="haiku-text">${escapeHtml(haiku)}</span>`
-    haikuDisplay.innerHTML = html
-
-    // Add unrolled class for animation
-    const scrollWrapper = document.getElementById('scrollWrapper')
-    scrollWrapper.classList.add('unrolled')
-  }
-
-  function displayPlaceholder() {
-    haikuDisplay.innerHTML = '<p class="haiku-placeholder">Натисніть «Створити хайку»,<br>щоб побачити поезію</p>'
-  }
-
-  // --- API call ---
-  async function generateHaiku(keywords, language, spiciness) {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
-
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords, language, spiciness }),
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeout)
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        const err = new Error(data.error || 'Щось пішло не за планом. Спробуйте пізніше.')
-        if (data.profanityWords) {
-          err.profanityWords = data.profanityWords
-        }
-        throw err
-      }
-
-      return data
-    } catch (err) {
-      clearTimeout(timeout)
-
-      if (err.name === 'AbortError') {
-        throw new Error('Запит зайняв занадто багато часу. Спробуйте ще раз.')
-      }
-
-      if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        throw new Error('Сервер тимчасово недоступний. Спробуйте пізніше.')
-      }
-
-      throw err
-    }
-  }
-
-  // --- Generate button handler ---
-  async function handleGenerate() {
-    hideError()
-
-    const keywords = keywordsInput.value.trim()
-    const language = languageSelect.value
-    const count = getWordCount()
-
-    // Client-side validation (should already be prevented by disabled button)
-    if (count < 3 || count > 7 || !language) {
-      return
-    }
-
-    // Loading state
-    generateBtn.classList.add('loading')
-    generateBtn.disabled = true
-
-    try {
-      const result = await generateHaiku(keywords, language, spiciness)
-
-      displayHaiku(result.haiku, result.fallback)
-
-      if (!result.fallback) {
-        saveToHistory(result.haiku, language, spiciness, keywords)
-      }
-    } catch (err) {
-      if (err.profanityWords) {
-        showProfanityModal(err.profanityWords)
-      } else {
-        showError(err.message)
-      }
-      displayPlaceholder()
-    } finally {
-      generateBtn.classList.remove('loading')
-      // Re-enable if validation passes
-      updateGenerateButton()
-    }
-  }
-
-  // --- Utility ---
-  function escapeHtml(text) {
-    const div = document.createElement('div')
-    div.textContent = text
-    return div.innerHTML
-  }
-
-  // --- Event listeners ---
-  keywordsInput.addEventListener('input', () => {
-    updateWordCount()
-    updateGenerateButton()
-  })
-
-  clearBtn.addEventListener('click', () => {
-    keywordsInput.value = ''
-    keywordsInput.focus()
-    updateWordCount()
-    updateGenerateButton()
-    hideError()
-  })
-
-  languageSelect.addEventListener('change', () => {
-    updateGenerateButton()
-    hideError()
-  })
-
-  wasabiBtn.addEventListener('click', cycleWasabi)
-
-  generateBtn.addEventListener('click', handleGenerate)
-
-  clearHistoryBtn.addEventListener('click', () => {
-    clearHistory()
-  })
+    renderHistory();
+  });
 
   // Modal close buttons
-  modalCloseBtn.addEventListener('click', hideProfanityModal)
-  modalActionBtn.addEventListener('click', hideProfanityModal)
+  els.modalCloseBtn.addEventListener("click", hideProfanityModal);
+  els.modalActionBtn.addEventListener("click", hideProfanityModal);
 
-  // Allow Enter key to submit
-  keywordsInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !generateBtn.disabled) {
-      e.preventDefault()
-      generateBtn.click()
+  // Close modal on overlay click
+  els.profanityModal.addEventListener("click", (event) => {
+    if (event.target === els.profanityModal) {
+      hideProfanityModal();
     }
-  })
+  });
 
-  // --- Initialization ---
-  function init() {
-    updateWasabi()
-    updateWordCount()
-    updateGenerateButton()
-    renderHistory()
-    displayPlaceholder()
-  }
+  // Close modal on Escape
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.profanityModal.hidden) {
+      hideProfanityModal();
+    }
+  });
 
-  init()
-})()
+  // Enter key to submit
+  els.keywords.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !els.generateButton.disabled) {
+      event.preventDefault();
+      els.generateButton.click();
+    }
+  });
+}
+
+// ─── Utility ──────────────────────────────────────────────
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ─── Init ─────────────────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindElements();
+  loadHistory();
+  bindEvents();
+  render();
+});
+})();

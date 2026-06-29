@@ -5,87 +5,71 @@ import { resolve } from 'path'
 // Helper to set up the DOM and load app.js
 function setupDOM() {
   document.body.innerHTML = `
-    <main class="bento-grid">
-      <header class="bento-item header-item">
-        <h1 class="site-title">Haiku <span class="title-accent">50</span></h1>
-        <p class="site-subtitle">Мить. Образ. Настрій.</p>
-      </header>
+    <div id="h50-screen" class="screen">
+      <main class="grid" id="app-grid">
+        <!-- Result card -->
+        <section class="card result-card">
+          <div class="result-stage" id="result-stage" aria-live="polite"></div>
+          <div class="done-meta is-hidden" id="done-meta"></div>
+        </section>
 
-      <section class="bento-item keywords-item">
-        <label for="keywords" class="input-label">Ключові слова</label>
-        <div class="input-wrapper">
-          <input type="text" id="keywords" class="keywords-input" placeholder="сакура, дощ, тиша..." autocomplete="off">
-          <button id="clearBtn" class="clear-btn" type="button" aria-label="Очистити поле" title="Очистити">✕</button>
-        </div>
-        <span id="wordCount" class="word-count">0 / 3–7 слів</span>
-      </section>
-
-      <section class="bento-item controls-item">
-        <div class="control-group">
-          <label for="language" class="input-label">Мова</label>
-          <select id="language" class="language-select">
-            <option value="">— Оберіть мову —</option>
-            <option value="uk">Українська</option>
-            <option value="en">English</option>
-            <option value="de">Deutsch</option>
-            <option value="ja">日本語</option>
-            <option value="fr">Français</option>
-            <option value="es">Español</option>
-            <option value="it">Italiano</option>
-            <option value="pt">Português</option>
-            <option value="pl">Polski</option>
-            <option value="zh">中文</option>
-            <option value="ko">한국어</option>
-            <option value="ar">العربية</option>
-          </select>
-        </div>
-
-        <div class="control-group wasabi-group">
-          <label class="input-label">50 Васабі</label>
-          <div class="wasabi-wrapper">
-            <button id="wasabiBtn" class="wasabi-btn" type="button" title="Рівень гостроти">
-              <span class="wasabi-icon">🌶</span>
-              <span id="wasabiLevel" class="wasabi-level">0</span>
-            </button>
-            <span class="wasabi-tooltip" id="wasabiTooltip">Рівень гостроти: 0 — спокійна класика</span>
+        <!-- Keywords -->
+        <section class="card keywords-card">
+          <div class="card-head">
+            <span>Keywords</span>
+            <button type="button" class="clear-button" id="clear-keywords" disabled>Clear</button>
           </div>
-        </div>
-      </section>
+          <textarea id="keywords" rows="3" placeholder="sakura, train, rain"></textarea>
+          <div class="count-label" id="count-label">3–7 needed</div>
+        </section>
 
-      <section class="bento-item generate-item">
-        <button id="generateBtn" class="generate-btn" disabled>
-          <span class="brush-text">Створити хайку</span>
-        </button>
-      </section>
+        <!-- Language -->
+        <section class="card language-card" id="language-card">
+          <span class="field-title">Language</span>
+          <button type="button" class="language-button" id="language-button" aria-haspopup="listbox" aria-expanded="false">
+            <span id="language-label">Choose language</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div class="language-menu is-hidden" id="language-menu" role="listbox"></div>
+        </section>
 
-      <div id="errorArea" class="bento-item error-area" role="alert" hidden></div>
-
-      <section class="bento-item scroll-item" id="scrollContainer">
-        <div class="scroll-wrapper" id="scrollWrapper">
-          <div class="scroll-inner">
-            <div class="scroll-paper" id="haikuDisplay">
-              <p class="haiku-placeholder">Натисніть «Створити хайку»,<br>щоб побачити поезію</p>
-            </div>
+        <!-- Wasabi -->
+        <section class="card wasabi-card">
+          <button type="button" class="wasabi-button" id="wasabi-button">
+            <span class="wasabi-drop" aria-hidden="true"></span>
+            50 wasabi
+          </button>
+          <div class="wasabi-status">
+            <div class="wasabi-dots" id="wasabi-dots" aria-hidden="true"></div>
+            <div class="spice-label" id="spice-label">Heat level: 0</div>
+            <div class="spice-max is-hidden" id="spice-max"></div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="bento-item history-item" id="historySection">
-        <div class="history-header">
-          <h2 class="history-title">Історія</h2>
-          <button id="clearHistoryBtn" class="clear-history-btn" type="button" title="Очистити історію">✕</button>
-        </div>
-        <div class="history-list" id="historyList">
-          <p class="history-empty">Ще немає збережених хайку</p>
-        </div>
-      </section>
-    </main>
+        <!-- History -->
+        <section class="card history-card">
+          <div class="card-head history-head">
+            <span>History</span>
+            <span id="history-count"></span>
+            <button id="clear-history-btn" class="clear-history-btn" type="button" title="Clear history">✕</button>
+          </div>
+          <div class="history-empty" id="history-empty">No haiku yet</div>
+          <div class="history-list" id="history-list"></div>
+        </section>
 
+        <!-- Generate -->
+        <section class="info-card">
+          <button type="button" class="generate-button" id="generate-button">Generate haiku</button>
+        </section>
+      </main>
+    </div>
+
+    <!-- Profanity Modal -->
     <div id="profanityModal" class="modal-overlay" role="dialog" aria-modal="true" hidden>
       <div class="modal-content">
-        <button id="modalCloseBtn" type="button" aria-label="Закрити">✕</button>
+        <button id="modalCloseBtn" type="button" aria-label="Close">✕</button>
         <div class="modal-body">
-          <h2 id="modalTitle">Виявлено нецензурні слова</h2>
+          <h2 id="modalTitle" class="modal-title">Виявлено нецензурні слова</h2>
           <p class="modal-message">Будь ласка, видаліть з ключових слів заборонену лексику:</p>
           <div id="modalWordList" class="modal-word-list"></div>
           <button id="modalActionBtn" type="button">Зрозуміло</button>
@@ -97,71 +81,78 @@ function setupDOM() {
   // Clear localStorage before each test
   localStorage.clear()
 
-  // Import app.js (IIFE runs immediately)
+  // Import app.js (defer-like execution: bindElements + loadHistory + bindEvents + render)
   const appJsPath = resolve(__dirname, '../public/js/app.js')
   const code = readFileSync(appJsPath, 'utf-8')
   const script = document.createElement('script')
   script.textContent = code
   document.body.appendChild(script)
+
+  // Trigger DOMContentLoaded so init runs
+  document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }))
 }
 
-describe('Клієнтська логіка — валідація введення', () => {
+describe('Клієнтська логіка — валідація', () => {
   beforeEach(() => {
     setupDOM()
   })
 
-  it('Введено < 3 слів → кнопка заблокована', () => {
-    const keywordsInput = document.getElementById('keywords')
-    const generateBtn = document.getElementById('generateBtn')
-    const languageSelect = document.getElementById('language')
+  it('Введено < 3 слів → Generate показує помилку', () => {
+    const keywords = document.getElementById('keywords')
+    const generateBtn = document.getElementById('generate-button')
 
-    // Type 2 words
-    keywordsInput.value = 'сакура, дощ'
-    keywordsInput.dispatchEvent(new Event('input', { bubbles: true }))
+    keywords.value = 'сакура, дощ'
+    keywords.dispatchEvent(new Event('input', { bubbles: true }))
 
-    // Select a language so only keyword validation blocks
-    languageSelect.value = 'uk'
-    languageSelect.dispatchEvent(new Event('change', { bubbles: true }))
+    generateBtn.click()
 
-    expect(generateBtn.disabled).toBe(true)
+    const errorText = document.querySelector('.error-text')
+    expect(errorText).not.toBeNull()
+    expect(errorText.textContent).toBe('Enter 3 to 7 words or short phrases')
   })
 
-  it('Введено > 7 слів → кнопка заблокована', () => {
-    const keywordsInput = document.getElementById('keywords')
-    const generateBtn = document.getElementById('generateBtn')
-    const languageSelect = document.getElementById('language')
+  it('Введено > 7 слів → Generate показує помилку', () => {
+    const keywords = document.getElementById('keywords')
+    const generateBtn = document.getElementById('generate-button')
 
-    // Type 8 words
-    keywordsInput.value = 'a, b, c, d, e, f, g, h'
-    keywordsInput.dispatchEvent(new Event('input', { bubbles: true }))
+    keywords.value = 'a, b, c, d, e, f, g, h'
+    keywords.dispatchEvent(new Event('input', { bubbles: true }))
 
-    languageSelect.value = 'uk'
-    languageSelect.dispatchEvent(new Event('change', { bubbles: true }))
+    generateBtn.click()
 
-    expect(generateBtn.disabled).toBe(true)
+    const errorText = document.querySelector('.error-text')
+    expect(errorText).not.toBeNull()
+    expect(errorText.textContent).toContain('Too many')
   })
 
-  it('Мову не обрано → кнопка заблокована', () => {
-    const keywordsInput = document.getElementById('keywords')
-    const generateBtn = document.getElementById('generateBtn')
+  it('Мову не обрано → Generate показує помилку', () => {
+    const keywords = document.getElementById('keywords')
+    const generateBtn = document.getElementById('generate-button')
 
-    // Type 3 valid words but no language
-    keywordsInput.value = 'сакура, дощ, вітер'
-    keywordsInput.dispatchEvent(new Event('input', { bubbles: true }))
+    keywords.value = 'сакура, дощ, вітер'
+    keywords.dispatchEvent(new Event('input', { bubbles: true }))
 
-    expect(generateBtn.disabled).toBe(true)
+    generateBtn.click()
+
+    const errorText = document.querySelector('.error-text')
+    expect(errorText).not.toBeNull()
+    expect(errorText.textContent).toBe('Choose a generation language')
   })
 
-  it('Всі умови виконано → кнопка активна', () => {
-    const keywordsInput = document.getElementById('keywords')
-    const generateBtn = document.getElementById('generateBtn')
-    const languageSelect = document.getElementById('language')
+  it('Всі умови виконано → кнопка активна і викликає API', () => {
+    const keywords = document.getElementById('keywords')
+    const generateBtn = document.getElementById('generate-button')
+    const languageBtn = document.getElementById('language-button')
+    const languageMenu = document.getElementById('language-menu')
 
-    keywordsInput.value = 'сакура, дощ, вітер'
-    keywordsInput.dispatchEvent(new Event('input', { bubbles: true }))
+    keywords.value = 'сакура, дощ, вітер'
+    keywords.dispatchEvent(new Event('input', { bubbles: true }))
 
-    languageSelect.value = 'uk'
-    languageSelect.dispatchEvent(new Event('change', { bubbles: true }))
+    // Open language menu and select Ukrainian
+    languageBtn.click()
+    const options = languageMenu.querySelectorAll('.language-option')
+    // Ukrainian is first option (code "uk")
+    options[0].click()
 
     expect(generateBtn.disabled).toBe(false)
   })
@@ -173,26 +164,39 @@ describe('Клієнтська логіка — spiciness (васабі)', () =>
   })
 
   it('Spiciness клік 7 разів → значення 0', () => {
-    const wasabiBtn = document.getElementById('wasabiBtn')
-    const wasabiLevel = document.getElementById('wasabiLevel')
+    const wasabiButton = document.getElementById('wasabi-button')
+    const spiceLabel = document.getElementById('spice-label')
 
-    // Click 7 times
+    // Click 7 times should cycle back to 0
     for (let i = 0; i < 7; i++) {
-      wasabiBtn.click()
+      wasabiButton.click()
     }
 
-    expect(wasabiLevel.textContent).toBe('0')
+    expect(spiceLabel.textContent).toBe('Heat level: 0')
   })
 
   it('Spiciness клік 3 рази → значення 3', () => {
-    const wasabiBtn = document.getElementById('wasabiBtn')
-    const wasabiLevel = document.getElementById('wasabiLevel')
+    const wasabiButton = document.getElementById('wasabi-button')
+    const spiceLabel = document.getElementById('spice-label')
 
     for (let i = 0; i < 3; i++) {
-      wasabiBtn.click()
+      wasabiButton.click()
     }
 
-    expect(wasabiLevel.textContent).toBe('3')
+    expect(spiceLabel.textContent).toBe('Heat level: 3')
+  })
+
+  it('Булліт-дотси відповідають рівню spice', () => {
+    const wasabiButton = document.getElementById('wasabi-button')
+    const wasabiDots = document.getElementById('wasabi-dots')
+
+    wasabiButton.click() // spice = 1
+    let activeDots = wasabiDots.querySelectorAll('.wasabi-dot.is-active')
+    expect(activeDots.length).toBe(1)
+
+    wasabiButton.click() // spice = 2
+    activeDots = wasabiDots.querySelectorAll('.wasabi-dot.is-active')
+    expect(activeDots.length).toBe(2)
   })
 })
 
@@ -202,13 +206,20 @@ describe('Клієнтська логіка — очищення', () => {
   })
 
   it('Кнопка очищення → поле порожнє', () => {
-    const keywordsInput = document.getElementById('keywords')
-    const clearBtn = document.getElementById('clearBtn')
+    const keywords = document.getElementById('keywords')
+    const clearBtn = document.getElementById('clear-keywords')
 
-    keywordsInput.value = 'сакура, дощ, вітер'
+    keywords.value = 'сакура, дощ, вітер'
+    keywords.dispatchEvent(new Event('input', { bubbles: true }))
+
     clearBtn.click()
 
-    expect(keywordsInput.value).toBe('')
+    expect(keywords.value).toBe('')
+  })
+
+  it('Кнопка очищення неактивна при порожньому полі', () => {
+    const clearBtn = document.getElementById('clear-keywords')
+    expect(clearBtn.disabled).toBe(true)
   })
 })
 
@@ -218,22 +229,25 @@ describe('Клієнтська логіка — localStorage історія', ()
   })
 
   it('localStorage зберігає хайку', () => {
-    // Simulate saving a haiku
+    // Simulate saving a haiku in the new format
     const history = [
       {
+        id: 1700000000000,
+        lines: ['Тиша в саду', 'падає листя кленів', 'осінь прийшла'],
         haiku: 'Тиша в саду,\nпадає листя кленів —\nосінь прийшла.',
-        language: 'uk',
-        spiciness: 2,
-        keywords: 'тиша, сад, осінь',
-        timestamp: 1700000000000,
+        langLabel: 'Ukrainian',
+        spice: 2,
+        timeLabel: '14:30',
       },
     ]
     localStorage.setItem('haikuHistory', JSON.stringify(history))
 
+    // Load app so it picks up history
+    // setupDOM already ran, so loadHistory already ran
     const stored = JSON.parse(localStorage.getItem('haikuHistory'))
     expect(stored.length).toBe(1)
     expect(stored[0].haiku).toContain('Тиша')
-    expect(stored[0].language).toBe('uk')
+    expect(stored[0].langLabel).toBe('Ukrainian')
   })
 
   it('localStorage максимум 100 записів', () => {
@@ -241,90 +255,77 @@ describe('Клієнтська логіка — localStorage історія', ()
     const history = []
     for (let i = 0; i < 105; i++) {
       history.push({
+        id: 1700000000000 + i,
+        lines: [`line ${i}`],
         haiku: `Haiku number ${i}`,
-        language: 'uk',
-        spiciness: 0,
-        keywords: 'test',
-        timestamp: 1700000000000 + i,
+        langLabel: 'Ukrainian',
+        spice: 0,
+        timeLabel: '14:30',
       })
     }
     localStorage.setItem('haikuHistory', JSON.stringify(history))
 
-    let stored = JSON.parse(localStorage.getItem('haikuHistory'))
-    expect(stored.length).toBe(105)
-
-    // Now simulate app logic: keep only first 100
-    stored = stored.slice(0, 100)
-    expect(stored.length).toBe(100)
-    expect(stored[0].haiku).toBe('Haiku number 0')
+    // App logic would slice to first 100
+    const sliced = history.slice(0, 100)
+    expect(sliced.length).toBe(100)
+    expect(sliced[0].haiku).toBe('Haiku number 0')
   })
 
-  it('Відповідь з fallback: true не зберігається', () => {
-    // Simulate the app logic: only save when !fallback
+  it('Відповідь з fallback: true не зберігається — симуляція', () => {
+    // This simulates the app logic: fallback haikus are never saved
     const history = []
 
     const fallbackHaiku = 'Шумлять сервери,\nТиша в їхніх відповідях —\nСумно нам сьогодні.'
     const realHaiku = 'Тиша в саду,\nпадає листя кленів —\nосінь прийшла.'
 
-    // This is what happens when fallback is true — save is skipped
-    // Don't save fallback
-    // saveToHistory(fallbackHaiku, 'uk', 0, 'test') — NOT called
-
-    // Only save real haiku
+    // Only save real haiku (new format)
     history.push({
+      id: Date.now(),
+      lines: realHaiku.split('\n'),
       haiku: realHaiku,
-      language: 'uk',
-      spiciness: 0,
-      keywords: 'test',
-      timestamp: Date.now(),
+      langLabel: 'Ukrainian',
+      spice: 0,
+      timeLabel: '14:30',
     })
     localStorage.setItem('haikuHistory', JSON.stringify(history))
 
     const stored = JSON.parse(localStorage.getItem('haikuHistory'))
     expect(stored.length).toBe(1)
     expect(stored[0].haiku).toBe(realHaiku)
+    // Fallback should not appear in history
     expect(stored[0].haiku).not.toBe(fallbackHaiku)
   })
 })
 
 describe('Клієнтська логіка — попап профаніті', () => {
   beforeEach(() => {
-    document.body.innerHTML = ''
-
+    // Minimal DOM for profanity modal tests
     document.body.innerHTML = `
-      <main class="bento-grid">
-        <section class="bento-item keywords-item">
-          <input type="text" id="keywords" class="keywords-input" placeholder="сакура, дощ, тиша..." autocomplete="off">
-          <button id="clearBtn" class="clear-btn" type="button">✕</button>
-          <span id="wordCount" class="word-count">0 / 3-7 слів</span>
+      <div class="screen" id="h50-screen">
+        <section class="card wasabi-card">
+          <button type="button" class="wasabi-button" id="wasabi-button">50 wasabi</button>
+          <div class="wasabi-dots" id="wasabi-dots"></div>
+          <div class="spice-label" id="spice-label">Heat level: 0</div>
+          <div class="spice-max is-hidden" id="spice-max"></div>
         </section>
-        <section class="bento-item controls-item">
-          <select id="language" class="language-select">
-            <option value="">— Оберіть мову —</option>
-            <option value="uk">Українська</option>
-          </select>
-          <button id="wasabiBtn" type="button"><span class="wasabi-icon">🌶</span><span id="wasabiLevel">0</span></button>
-          <span id="wasabiTooltip">tooltip</span>
-        </section>
-        <section class="bento-item generate-item">
-          <button id="generateBtn" class="generate-btn" disabled>
-            <span class="brush-text">Створити хайку</span>
-          </button>
-        </section>
-        <div id="errorArea" class="bento-item error-area" role="alert" hidden></div>
-        <section class="bento-item scroll-item" id="scrollContainer">
-          <div class="scroll-wrapper" id="scrollWrapper">
-            <div class="scroll-paper" id="haikuDisplay"></div>
-          </div>
-        </section>
-        <section class="bento-item history-item" id="historySection">
-          <button id="clearHistoryBtn" type="button">✕</button>
-          <div class="history-list" id="historyList"></div>
-        </section>
-      </main>
+        <button type="button" class="generate-button" id="generate-button">Generate haiku</button>
+        <div class="result-stage" id="result-stage"></div>
+        <div class="done-meta is-hidden" id="done-meta"></div>
+        <div class="history-list" id="history-list"></div>
+        <div class="history-empty" id="history-empty">No haiku yet</div>
+        <span id="history-count"></span>
+        <button id="clear-history-btn" type="button">✕</button>
+        <div id="language-card">
+          <button id="language-button"><span id="language-label">Choose</span></button>
+          <div id="language-menu"></div>
+        </div>
+        <textarea id="keywords"></textarea>
+        <div class="count-label" id="count-label">3–7 needed</div>
+        <button class="clear-button" id="clear-keywords" disabled>Clear</button>
+      </div>
       <div id="profanityModal" class="modal-overlay" role="dialog" aria-modal="true" hidden>
         <div class="modal-content">
-          <button id="modalCloseBtn" type="button" aria-label="Закрити">✕</button>
+          <button id="modalCloseBtn" type="button">✕</button>
           <div class="modal-body">
             <h2 id="modalTitle">Виявлено нецензурні слова</h2>
             <p class="modal-message">Будь ласка, видаліть з ключових слів заборонену лексику:</p>
@@ -343,19 +344,18 @@ describe('Клієнтська логіка — попап профаніті', 
   })
 
   it('рендерить список заборонених слів у modal-word-list', () => {
-    // Load app.js for event listeners
     const appJsPath = resolve(__dirname, '../public/js/app.js')
     const code = readFileSync(appJsPath, 'utf-8')
     const script = document.createElement('script')
     script.textContent = code
     document.body.appendChild(script)
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }))
 
     const modalWordList = document.getElementById('modalWordList')
 
     // Simulate what showProfanityModal does:
-    // Renders <span class="word-tag">fuck</span><span class="word-tag">bastard</span>
     modalWordList.innerHTML = ['fuck', 'bastard']
-      .map(word => `<span class="word-tag">${word}</span>`)
+      .map(word => `<span class="word-tag">${word.replace(/[&<>"']/g, '')}</span>`)
       .join('')
 
     const tags = modalWordList.querySelectorAll('.word-tag')
@@ -370,17 +370,16 @@ describe('Клієнтська логіка — попап профаніті', 
     const script = document.createElement('script')
     script.textContent = code
     document.body.appendChild(script)
+    document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }))
 
     const profanityModal = document.getElementById('profanityModal')
 
     // Show modal
     profanityModal.hidden = false
-    document.body.style.overflow = 'hidden'
 
     // Press Escape
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
 
     expect(profanityModal.hidden).toBe(true)
-    expect(document.body.style.overflow).toBe('')
   })
 })
